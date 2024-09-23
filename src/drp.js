@@ -28,4 +28,6 @@ RPC.on('ready', async () => {
     setActivity();
 });
 
-RPC.login({ clientId : clientID }).catch(err => console.error(err));
+module.export = function setupDiscordRPC() {
+    RPC.login({ clientId : clientID }).catch(err => console.error(err));
+};
