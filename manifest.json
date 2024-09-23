@@ -4,6 +4,15 @@
     "description": "Show your discord friends your Leetcode grind!",
     "version": "1.0",
     "action": {
-        "default_icon": "leetcode-icon.png"
-    }
+        "default_icon": "images/leetcode-icon.jpeg"
+    },
+    "content_scripts": [
+        {
+            "js": ["src/app.js"],
+            "matches": [
+                "https://leetcode.com/problemset/",
+                "https://leetcode.com/problems/*"
+            ]
+        }
+    ]
 }
