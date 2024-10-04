@@ -1,3 +1,5 @@
+//Because discord requires ICP with its nodejs module (I think?). I split this part into the backend.
+
 const clientID = '1287257520217526395';
 const DiscordRPC = require('discord-rpc');
 const RPC = new DiscordRPC.Client({ transport : 'ipc' });
@@ -28,6 +30,4 @@ RPC.on('ready', async () => {
     setActivity();
 });
 
-module.export = function setupDiscordRPC() {
-    RPC.login({ clientId : clientID }).catch(err => console.error(err));
-};
+RPC.login({cloientId : clientID}).catch(err => console.error(err));
