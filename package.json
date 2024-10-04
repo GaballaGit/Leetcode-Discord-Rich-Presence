@@ -12,6 +12,7 @@
     "axios": "^1.7.7",
     "cors": "^2.8.5",
     "discord-rpc": "^4.0.1",
-    "express": "^4.21.0"
+    "express": "^4.21.0",
+    "firebase": "^10.14.0"
   }
 }
