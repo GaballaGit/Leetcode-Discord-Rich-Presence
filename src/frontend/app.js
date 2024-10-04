@@ -50,30 +50,38 @@ async function fetchSiteData()
     console.log("Fetching data...");
     const url = window.location.href;
     
-    let currentSlug = url.split('/').slice(-3, -2)[0]; 
-    let i = 0;
-
-    while (currentSlug === 'problems' && i < 10) {
-        currentSlug = url.split('/').slice(-3 + i, -2 + i)[0];
-        i++;
-    }
-    url.split('/').slice(-3,-2)[0];
-    console.log(currentSlug, `https://leetcode.com/api/problems/${currentSlug}/`);
-    console.log(slugToTitle(currentSlug));
-
-    try
+    if (url === 'https://leetcode.com/problemset/')
     {
-        const response = await fetch(`https://leetcode.com/api/problems/${currentSlug}/`);
-        const data = await response.json();
-        console.log(data);
-
-        sendDataToBackend(slugToTitle(currentSlug), `https://leetcode.com/api/problems/${currentSlug}`);
+        sendDataToBackend('Browsing problems', 'https://leetcode.com/problemset/');
     }
-
-    catch (error)
+    else
     {
-        console.error('Error fetching data: ', error);
+        let currentSlug = url.split('/').slice(-3, -2)[0]; 
+        let i = 0;
+
+        while (currentSlug === 'problems' && i < 10) {
+            currentSlug = url.split('/').slice(-3 + i, -2 + i)[0];
+            i++;
+        }
+        url.split('/').slice(-3,-2)[0];
+        console.log(currentSlug, `https://leetcode.com/api/problems/${currentSlug}/`);
+        console.log(slugToTitle(currentSlug));
+
+        try
+        {
+            const response = await fetch(`https://leetcode.com/api/problems/${currentSlug}/`);
+            const data = await response.json();
+            console.log(data);
+
+            sendDataToBackend(slugToTitle(currentSlug), `https://leetcode.com/api/problems/${currentSlug}`);
+        }
+
+        catch (error)
+        {
+            console.error('Error fetching data: ', error);
+        }
     }
+    
 }
 
 fetchSiteData();
