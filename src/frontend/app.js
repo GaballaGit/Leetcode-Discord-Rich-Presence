@@ -1,10 +1,34 @@
 //This is the frontend, I fetch data here and send it to backend
-//const axios = require("axios");
-//const setupDiscordRPC = require("./drp.js");
+async function sendDataToBackend(title, url)
+{
+    try
+    {
+        const response = await fetch('http://localhost:5000/update-rpc', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: title,
+                url: url
+            })
+        });
 
-console.log("Testing!");
-//Get Leetcode 
+        const result = await response.text();
+        console.log('Backend response: ', result);
+    }
+    catch (error)
+    {
+        console.error('Error sending data to backend ', error);
+    }
+}
 
+//When the window is closed
+window.addEventListener('beforeunload', () => {
+    fetch('http://localhost:5000/close-rpc', {method: 'POST'});
+});
+
+//Converts the slug to a title
 function slugToTitle(slug)
 {
     const words = slug.split('-');
@@ -20,40 +44,36 @@ function slugToTitle(slug)
     return formattedWords.join(' ');
 }
 
-async function fetchSiteData() {
-    //TODO: figure out what I want to get from Leetcodes JSON
-    //const response = axios.get('https://leetcode.com/api/problems/all/');
+//Fetch data from leetcode
+async function fetchSiteData()
+{
     console.log("Fetching data...");
     const url = window.location.href;
-    const currentSlug = url.split('/').slice(-3,-2)[0];
+    
+    let currentSlug = url.split('/').slice(-3, -2)[0]; 
+    let i = 0;
+
+    while (currentSlug === 'problems' && i < 10) {
+        currentSlug = url.split('/').slice(-3 + i, -2 + i)[0];
+        i++;
+    }
+    url.split('/').slice(-3,-2)[0];
     console.log(currentSlug, `https://leetcode.com/api/problems/${currentSlug}/`);
     console.log(slugToTitle(currentSlug));
+
     try
     {
         const response = await fetch(`https://leetcode.com/api/problems/${currentSlug}/`);
         const data = await response.json();
-        //const userName = data.user_name;
-        //console.log("Data for", userName, ": ");
         console.log(data);
 
-        
-
-        //console.log("Current Problem: ", currentSlug);
-        //console.log("Problem Url: ", url);
-
-        /*const currentProblem = data.statements.find(problem => problem.slug === currentSlug);
-        if (currentProblem)
-        {
-            const title = currentProblem.title;
-            const url = 'https://leetcode.com/problems/${currentProblem.slug}/';
-            console.log("Current Problem: ", title);
-            console.log("Problem Url: ", url);
-        }*/
+        sendDataToBackend(slugToTitle(currentSlug), `https://leetcode.com/api/problems/${currentSlug}`);
     }
+
     catch (error)
     {
         console.error('Error fetching data: ', error);
     }
 }
+
 fetchSiteData();
-//setupDiscordRPC();
