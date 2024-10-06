@@ -1,5 +1,5 @@
 //This is the frontend, I fetch data here and send it to backend
-async function sendDataToBackend(title, url)
+async function sendDataToBackend(title, diff, url)
 {
     try
     {
@@ -28,20 +28,15 @@ window.addEventListener('beforeunload', () => {
     fetch('http://localhost:5000/close-rpc', {method: 'POST'});
 });
 
-//Converts the slug to a title
-function slugToTitle(slug)
+function getSlugfromURL(url)
 {
-    const words = slug.split('-');
-
-    const formattedWords = words.map(word => {
-        if (word.length > 2)
-        {
-            return word.charAt(0).toUpperCase() + word.slice(1);
-        }
-        return word;
-    });
-
-    return formattedWords.join(' ');
+    const pathSegments = new URL(url).pathname.split('/').filter(segment => segment);
+    const problemsIndex = pathSegments.indexOf('problems');
+    if (problemsIndex !== -1 && problemsIndex + 1 < pathSegments.length)
+    {
+        return pathSegments[problemsIndex + 1];
+    }
+    return null;
 }
 
 //Fetch data from leetcode
@@ -50,30 +45,47 @@ async function fetchSiteData()
     console.log("Fetching data...");
     const url = window.location.href;
     
-    if (url === 'https://leetcode.com/problemset/')
+    if (url.includes('https://leetcode.com/problemset/'))
     {
-        sendDataToBackend('Browsing problems', 'https://leetcode.com/problemset/');
+        sendDataToBackend('Browsing Problems', undefined, undefined);
     }
     else
     {
-        let currentSlug = url.split('/').slice(-3, -2)[0]; 
-        let i = 0;
 
-        while (currentSlug === 'problems' && i < 10) {
-            currentSlug = url.split('/').slice(-3 + i, -2 + i)[0];
-            i++;
-        }
-        url.split('/').slice(-3,-2)[0];
-        console.log(currentSlug, `https://leetcode.com/api/problems/${currentSlug}/`);
-        console.log(slugToTitle(currentSlug));
-
+        let currentSlug = getSlugfromURL(url);
+        
         try
         {
-            const response = await fetch(`https://leetcode.com/api/problems/${currentSlug}/`);
+            const response = await fetch(`https://leetcode.com/api/problems/all/`);
             const data = await response.json();
             console.log(data);
 
-            sendDataToBackend(slugToTitle(currentSlug), `https://leetcode.com/api/problems/${currentSlug}`);
+            const problem = data.stat_status_pairs.find(prob => prob.stat.question__title_slug === currentSlug);
+            if (problem) 
+            {
+                const title = problem.stat.question__title;
+                var difficulty = ''
+                switch (problem.difficulty.level)
+                {
+                    case 1:
+                        difficulty = 'Easy';
+                        break;
+                    case 2:
+                        difficulty = 'Medium';
+                        break;
+                    case 3:
+                        difficulty = 'Hard';
+                        break;
+                    
+                }
+                console.log(`Title: ${title}`);
+                console.log(`Difficulty: ${difficulty}`);
+                sendDataToBackend(title, difficulty, url);
+            }
+            else
+            {
+                console.log('Problem not found!');
+            }
         }
 
         catch (error)
