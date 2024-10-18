@@ -1,15 +1,18 @@
 //This is the frontend, I fetch data here and send it to backend
+//For deployment to production, I need to use the actual Firebase hosting URL (e.g., https://<your-app>.cloudfunctions.net/updateRPC) when the functions are deployed to Firebase.
 async function sendDataToBackend(title, diff, url)
 {
     try
     {
-        const response = await fetch('http://localhost:5000/update-rpc', {
+        const response = await fetch('http://localhost:5001/leetcode-drp/us-central1/updateRPC', {
+            mode: 'no-cors',
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 title: title,
+                diff: diff,
                 url: url
             })
         });
@@ -25,7 +28,7 @@ async function sendDataToBackend(title, diff, url)
 
 //When the window is closed
 window.addEventListener('beforeunload', () => {
-    fetch('http://localhost:5000/close-rpc', {method: 'POST'});
+    fetch('http://localhost:5001/leetcode-drp/us-central1/closeRPC', {method: 'POST'});
 });
 
 function getSlugfromURL(url)

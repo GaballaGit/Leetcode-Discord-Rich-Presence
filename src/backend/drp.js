@@ -1,83 +1,80 @@
 //Because discord requires ICP with its nodejs module (I think?). I split this part into the backend.
-import express from 'express';
 import cors from 'cors';
 import DiscordRPC from 'discord-rpc';
-import rateLimit from 'express-rate-limit';
-
-
+import functions from 'firebase-functions';
+import express from 'express';
 const app = express();
-const PORT = 5000;
+
+
+
+app.use(cors({
+    origin: 'https://leetcode.com',
+    methods: ['GET,POST,OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+    credentials: true
+}));
 
 const clientID = '1287257520217526395';
 const RPC = new DiscordRPC.Client({ transport : 'ipc' });
 
-//using cors allow request from leetcode
-app.use(cors({
-    origin: 'https://leetcode.com',
-    methods: 'GET,POST,OPTIONS',
-    allowedHeaders: 'Content-Type',
-    credentials: true
-}));
-
-//Limiting requests so I dont have to deal with (cough) unexpected expenses from firebase (cough cough)
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: 'Too Many requests, please try again later'
-});
-
-app.use(limiter);
-
 DiscordRPC.register(clientID);
 
-app.use(express.json());
 
-const server = app.listen(PORT, () => {
-    console.log(`Server is running on ${PORT}`);
-});
-
-//when the request is received from the frontend it goes here v
 app.post('/update-rpc', async (req, res) => {
-    const {title, diff ,url} = req.body;
-    console.log('Received Data: ', {title, diff, url});
-    
-    try
-    {
+    const { title, diff, url } = req.body;
+    try {
         await setActivity(title, diff, url);
-        res.status(200).send({message: 'RPC Updated Successfully'});
-    }
-    catch (err)
-    {
+        res.status(200).send('RPC Updated Successfully');
+    } catch (err) {
         console.error('Error setting activity: ', err);
-        res.status(500).send({message: 'Error updating RPC'});
+        res.status(500).send('Error updating RPC');
     }
-
 });
 
-//deal with closing tab
+// Handle closeRPC request
 app.post('/close-rpc', (req, res) => {
-    console.log('Closing RPC...');
     RPC.clearActivity()
         .then(() => {
-            console.log('RPC closed successfully. ');
-            res.status(200).send({message:'RPC closed successfully.'});
+            res.status(200).send('RPC closed successfully');
         })
-        .catch(err =>{
+        .catch(err => {
             console.error('Error closing RPC: ', err);
-            res.status(500).send({message: 'Error closing RPC.'});
+            res.status(500).send('Error closing RPC');
         });
 });
 
+exports.updateRPC = functions.https.onRequest(app);
+exports.closeRPC = functions.https.onRequest(app);
+
 //clean shutdown, SIGINT is a signal that is like ctrl + C on a terminal, clears activity and exits out with status 0 to let know, there was a clean shutdown
-process.on('SIGINT', async () => {
-    console.log('Recieved SIGINT. CLosing server...');
-    await RPC.clearActivity();
-    server.close(() => {
-        console.log('Server Closed');
-        process.exit(0);
+/*exports.updateRPC = functions.https.onRequest((req, res) => {
+    cors(corsOptions)(req, res, () => {
+        const {title, diff, url} = req.body;
+
+        setActivity(title, diff, url)
+            .then(() => {
+                res.status(200).send('RPC Updated Successfully');
+            })
+            .catch(err => {
+                console.error('Error setting activity: ', err);
+                res.status(500).send('Error updating RPC');
+            });
     });
 });
 
+exports.closeRPC = functions.https.onRequest((req, res) => {
+    cors(corsOptions)(req, res, () => {
+        RPC.clearActivity()
+            .then(() => {
+                res.status(200).send('RPC closed successfully');
+            })
+            .catch(err => {
+                console.error('Error closing RPC: ', err);
+                res.status(500).send('Error closing RPC');
+            });
+    });
+});
+*/
 
 //Set discord activity
 async function setActivity(title, diff, url) {
@@ -115,4 +112,5 @@ RPC.on('ready', async () => {
 });
 
 RPC.login({clientId : clientID}).catch(err => console.error(err));
+
 
